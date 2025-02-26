@@ -4,10 +4,10 @@
 #train_ir: E:\projects\python\ultralytics\train_data\LLVIP\ir\train\images
 #val_ir: E:\projects\python\ultralytics\train_data\LLVIP\ir\val\images
 
-train_rgb: /usr/local/sunyi/projects/python/ultralytics/train_data/LLVIP/rgb/train/images
-val_rgb: /usr/local/sunyi/projects/python/ultralytics/train_data/LLVIP/rgb/val/images
-train_ir: /usr/local/sunyi/projects/python/ultralytics/train_data/LLVIP/ir/train/images
-val_ir: /usr/local/sunyi/projects/python/ultralytics/train_data/LLVIP/ir/val/images
+train_rgb: /usr/local/sunyi/projects/ultralytics/train_data/LLVIP/rgb/train/images
+val_rgb: /usr/local/sunyi/projects/ultralytics/train_data/LLVIP/rgb/val/images
+train_ir: /usr/local/sunyi/projects/ultralytics/train_data/LLVIP/ir/train/images
+val_ir: /usr/local/sunyi/projects/ultralytics/train_data/LLVIP/ir/val/images
 # number of classes
 nc: 1
 
