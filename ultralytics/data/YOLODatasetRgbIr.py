@@ -230,7 +230,7 @@ def load_image_rgb_ir(self, index):
         assert img_ir is not None, 'Image IR Not Found ' + path_ir
 
         h0, w0 = img_rgb.shape[:2]  # orig hw
-        r = self.img_size / max(h0, w0)  # ratio
+        r = self.imgsz / max(h0, w0)  # ratio
         if r != 1:  # if sizes are not equal
             img_rgb = cv2.resize(img_rgb, (int(w0 * r), int(h0 * r)),
                                  interpolation=cv2.INTER_AREA if r < 1 and not self.augment else cv2.INTER_LINEAR)
@@ -249,7 +249,7 @@ def load_mosaic_RGB_IR(self, index1, index2):
     labels4_rgb, segments4_rgb = [], []
     labels4_ir, segments4_ir = [], []
 
-    s = self.img_size
+    s = self.imgsz
 
     # print("image size ", s)
 
@@ -309,11 +309,11 @@ def load_mosaic_RGB_IR(self, index1, index2):
 
     img4_rgb, img4_ir, labels4_rgb, labels4_ir = random_perspective_rgb_ir(img4_rgb, img4_ir, labels4_rgb, labels4_ir,
                                                                            segments4_rgb, segments4_ir,
-                                                                           degrees=self.hyp['degrees'],
-                                                                           translate=self.hyp['translate'],
-                                                                           scale=self.hyp['scale'],
-                                                                           shear=self.hyp['shear'],
-                                                                           perspective=self.hyp['perspective'],
+                                                                           degrees=self.hyp.degrees,
+                                                                           translate=self.hyp.translate,
+                                                                           scale=self.hyp.scale,
+                                                                           shear=self.hyp.shear,
+                                                                           perspective=self.hyp.perspective,
                                                                            border=self.mosaic_border)  # border to remove
 
     # print(labels_rgb)
@@ -634,44 +634,17 @@ class YOLODatasetRgbIr(Dataset):
     def __len__(self):
         return len(self.img_files_rgb)
 
-    # def __iter__(self):
-    #     self.count = -1
-    #     print('ran dataset iter')
-    #     #self.shuffled_vector = np.random.permutation(self.nF) if self.augment else np.arange(self.nF)
-    #     return self
-
     def __getitem__(self, index):
         # index = self.indices[index]  # linear, shuffled, or image_weights
         index_rgb = self.indices_rgb[index]  # linear, shuffled, or image_weights
         index_ir = self.indices_ir[index]  # linear, shuffled, or image_weights
 
         hyp = self.hyp
-        mosaic = self.mosaic and random.random() < hyp['mosaic']
+        mosaic = self.mosaic and random.random() < hyp.mosaic
         if mosaic:
             # Load mosaic
-
-            # img, labels = load_mosaic(self, index)
             img_rgb, labels_rgb, img_ir, labels_ir = load_mosaic_RGB_IR(self, index_rgb, index_ir)
-
-            # # FQY 打印图片
-            # # print("--------------------------------------Load mosaic")
-            # im_rgb = Image.fromarray(img_rgb.astype('uint8')).convert('RGB')
-            # Image.Image.save(im_rgb, 'example_%s_%s.jpg' % (str(index), "RGB"))
-            # print(' write the example_%s_%s.jpg' % (self.img_rgb_path.split("/")[7], str(index)))
-            # im_ir = Image.fromarray(img_ir.astype('uint8')).convert('RGB')
-            # Image.Image.save(im_ir, 'example_%s_%s.jpg' % (str(index), "IR"))
-            # print(' write the example_%s_%s.jpg' % (self.img_ir_path.split("/")[7], str(index)))
-
             shapes = None
-
-            # # MixUp https://arxiv.org/pdf/1710.09412.pdf
-            # if random.random() < hyp['mixup']:
-            #
-            #     img2, labels2 = load_mosaic(self, random.randint(0, self.n - 1))
-            #     r = np.random.beta(8.0, 8.0)  # mixup ratio, alpha=beta=8.0
-            #     img = (img * r + img2 * (1 - r)).astype(np.uint8)
-            #     labels = np.concatenate((labels, labels2), 0)
-
         else:
             # Load image
             img_rgb, img_ir, (h0, w0), (h, w) = load_image_rgb_ir(self, index)
@@ -692,8 +665,8 @@ class YOLODatasetRgbIr(Dataset):
 
         if self.augment:
             # Augment colorspace
-            augment_hsv(img_rgb, hgain=hyp['hsv_h'], sgain=hyp['hsv_s'], vgain=hyp['hsv_v'])
-            augment_hsv(img_ir, hgain=hyp['hsv_h'], sgain=hyp['hsv_s'], vgain=hyp['hsv_v'])
+            augment_hsv(img_rgb, hgain=hyp.hsv_h, sgain=hyp.hsv_s, vgain=hyp.hsv_v)
+            augment_hsv(img_ir, hgain=hyp.hsv_h, sgain=hyp.hsv_s, vgain=hyp.hsv_v)
         nL = len(labels_rgb)  # number of labels
         if nL:
             labels_rgb[:, 1:5] = xyxy2xywh(labels_rgb[:, 1:5])  # convert xyxy to xywh
@@ -702,14 +675,14 @@ class YOLODatasetRgbIr(Dataset):
 
         if self.augment:
             # flip up-down
-            if random.random() < hyp['flipud']:
+            if random.random() < hyp.flipud:
                 img_rgb = np.flipud(img_rgb)
                 img_ir = np.flipud(img_ir)
                 if nL:
                     labels_rgb[:, 2] = 1 - labels_rgb[:, 2]
 
             # flip left-right
-            if random.random() < hyp['fliplr']:
+            if random.random() < hyp.fliplr:
                 img_rgb = np.fliplr(img_rgb)
                 img_ir = np.fliplr(img_ir)
 
