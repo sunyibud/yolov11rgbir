@@ -42,10 +42,10 @@ def train(args):
 
 def main():
     args = dict(
-        # model_yaml = r'/usr/local/sunyi/projects/ultralytics/ultralytics/cfg/models/transformer/yolov11_fusion_transformerx3_FLIR_aligned.yaml',
-        # data_yaml=r'/usr/local/sunyi/projects/ultralytics/train_data/LLVIP/data.yaml',
-        model_yaml=r'E:\projects\python\ultralytics\ultralytics\cfg\models\transformer\yolov11_fusion_transformerx3_FLIR_aligned.yaml',
-        data_yaml=r'E:\projects\python\ultralytics\train_data\LLVIP\data.yaml',
+        model_yaml = r'/sunyi/projects/yolov11rgbir/ultralytics/cfg/models/transformer/yolov11_fusion_transformerx3_FLIR_aligned.yaml',
+        data_yaml=r'/sunyi/projects/yolov11rgbir/train_data/LLVIP/data.yaml',
+        # model_yaml=r'E:\projects\python\ultralytics\ultralytics\cfg\models\transformer\yolov11_fusion_transformerx3_FLIR_aligned.yaml',
+        # data_yaml=r'E:\projects\python\ultralytics\train_data\LLVIP\data.yaml',
         imgsz=640,
         epochs=10,
         batch=16,

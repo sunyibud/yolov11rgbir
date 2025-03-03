@@ -53,6 +53,7 @@ from ultralytics.utils.torch_utils import (
     strip_optimizer,
     torch_distributed_zero_first,
 )
+from utils.loss import ComputeLoss
 
 
 class BaseTrainer:
@@ -381,7 +382,9 @@ class BaseTrainer:
                 # Forward
                 with autocast(self.amp):
                     # batch = self.preprocess_batch(imgs)
-                    self.loss, self.loss_items = self.model(imgs_rgb, imgs_ir)
+                    compute_loss = ComputeLoss(self.model)
+                    pred = self.model(imgs_rgb, imgs_ir)
+                    self.loss, self.loss_items = compute_loss(pred, targets.to(self.device))
                     if RANK != -1:
                         self.loss *= world_size
                     self.tloss = (

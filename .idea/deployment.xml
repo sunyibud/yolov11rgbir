@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
-  <component name="PublishConfigData" autoUpload="Always" serverName="3090" remoteFilesAllowedToDisappearOnAutoupload="false" confirmBeforeUploading="false">
+  <component name="PublishConfigData" autoUpload="Always" serverName="3090innet" remoteFilesAllowedToDisappearOnAutoupload="false" confirmBeforeUploading="false">
     <option name="confirmBeforeUploading" value="false" />
     <serverData>
-      <paths name="3090">
+      <paths name="3090innet">
         <serverdata>
           <mappings>
-            <mapping deploy="/ultralytics" local="$PROJECT_DIR$" web="/" />
+            <mapping deploy="yolov11rgbir" local="$PROJECT_DIR$" />
           </mappings>
         </serverdata>
       </paths>

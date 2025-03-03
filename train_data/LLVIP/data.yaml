@@ -1,13 +1,13 @@
 # train and val data as 1) directory: path/images/, 2) file: path/images.txt, or 3) list: [path1/images/, path2/images/]
-train_rgb: E:\projects\python\ultralytics\train_data\LLVIP\rgb\train\images
-val_rgb: E:\projects\python\ultralytics\train_data\LLVIP\rgb\val\images
-train_ir: E:\projects\python\ultralytics\train_data\LLVIP\ir\train\images
-val_ir: E:\projects\python\ultralytics\train_data\LLVIP\ir\val\images
-
-#train_rgb: /usr/local/sunyi/projects/ultralytics/train_data/LLVIP/rgb/train/images
-#val_rgb: /usr/local/sunyi/projects/ultralytics/train_data/LLVIP/rgb/val/images
-#train_ir: /usr/local/sunyi/projects/ultralytics/train_data/LLVIP/ir/train/images
-#val_ir: /usr/local/sunyi/projects/ultralytics/train_data/LLVIP/ir/val/images
+#train_rgb: E:\projects\python\ultralytics\train_data\LLVIP\rgb\train\images
+#val_rgb: E:\projects\python\ultralytics\train_data\LLVIP\rgb\val\images
+#train_ir: E:\projects\python\ultralytics\train_data\LLVIP\ir\train\images
+#val_ir: E:\projects\python\ultralytics\train_data\LLVIP\ir\val\images
+#
+train_rgb: /sunyi/projects/yolov11rgbir/train_data/LLVIP/rgb/train/images
+val_rgb: /sunyi/projects/yolov11rgbir/train_data/LLVIP/rgb/val/images
+train_ir: /sunyi/projects/yolov11rgbir/train_data/LLVIP/ir/train/images
+val_ir: /sunyi/projects/yolov11rgbir/train_data/LLVIP/ir/val/images
 # number of classes
 nc: 1
 

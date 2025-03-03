@@ -100,28 +100,6 @@ except ImportError:
 
 class BaseModel(nn.Module):
     """The BaseModel class serves as a base class for all the models in the Ultralytics YOLO family."""
-
-
-    def my_forward(self, x, x2, augment=False, profile=False):
-        if augment:
-            img_size = x.shape[-2:]  # height, width
-            s = [1, 0.83, 0.67]  # scales
-            f = [None, 3, None]  # flips (2-ud, 3-lr)
-            y = []  # outputs
-            for si, fi in zip(s, f):
-                xi = scale_img(x.flip(fi) if fi else x, si, gs=int(self.stride.max()))
-                yi = self.my_forward_once(xi)[0]  # forward
-                # cv2.imwrite(f'img_{si}.jpg', 255 * xi[0].cpu().numpy().transpose((1, 2, 0))[:, :, ::-1])  # save
-                yi[..., :4] /= si  # de-scale
-                if fi == 2:
-                    yi[..., 1] = img_size[  0] - yi[..., 1]  # de-flip ud
-                elif fi == 3:
-                    yi[..., 0] = img_size[1] - yi[..., 0]  # de-flip lr
-                y.append(yi)
-            return torch.cat(y, 1), None  # augmented inference, train
-        else:
-            return self.my_forward_once(x, x2, profile)  # single-scale inference, train
-
     def predict(self, x, x2, profile=False, visualize=False, augment=False, embed=None):
         """
         Perform a forward pass through the network.
@@ -372,7 +350,7 @@ class DetectionModel(BaseModel):
             # 输入 x 是在计算步长时由 torch.zeros(1, ch, s, s) 创建的一个张量。这个张量作为测试输入，通过模型的一次前向传播来获取步长和其他初始化参数。
             # 即shape为(1,3,256,256)
             # m.stride = torch.tensor([s / x.shape[-2] for x in _forward(torch.zeros(1, ch, s, s))])  # forward
-            m.stride = torch.tensor([s / x.shape[-2] for x in self.my_forward(torch.zeros(1, ch, s, s), torch.zeros(1, ch, s, s))])  # forward
+            m.stride = torch.tensor([s / x.shape[-2] for x in self.forward(torch.zeros(1, ch, s, s), torch.zeros(1, ch, s, s))])  # forward
             # m.stride = torch.Tensor([8.0, 16.0, 32.0])
             # m.anchors /= m.stride.view(-1, 1, 1)
             # check_anchor_order(m)
@@ -388,7 +366,7 @@ class DetectionModel(BaseModel):
             self.info()
             LOGGER.info("")
 
-    def my_forward(self, x, x2, augment=False, profile=False):
+    def forward(self, x, x2, augment=False, profile=False):
         if augment:
             img_size = x.shape[-2:]  # height, width
             s = [1, 0.83, 0.67]  # scales

@@ -75,9 +75,9 @@ class DetectionTrainer(BaseTrainer):
 
     def preprocess_batch(self, batch):
         """Preprocesses a batch of images by scaling and converting to float."""
-        batch["img"] = batch["img"].to(self.device, non_blocking=True).float() / 255
+        batch[0] = batch[0].to(self.device, non_blocking=True).float() / 255
         if self.args.multi_scale:
-            imgs = batch["img"]
+            imgs = batch[0]
             sz = (
                 random.randrange(int(self.args.imgsz * 0.5), int(self.args.imgsz * 1.5 + self.stride))
                 // self.stride
@@ -89,7 +89,7 @@ class DetectionTrainer(BaseTrainer):
                     math.ceil(x * sf / self.stride) * self.stride for x in imgs.shape[2:]
                 ]  # new shape (stretched to gs-multiple)
                 imgs = nn.functional.interpolate(imgs, size=ns, mode="bilinear", align_corners=False)
-            batch["img"] = imgs
+            batch[0] = imgs
         return batch
 
     def set_model_attributes(self):
