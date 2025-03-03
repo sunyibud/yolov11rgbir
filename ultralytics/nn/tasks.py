@@ -100,6 +100,66 @@ except ImportError:
 
 class BaseModel(nn.Module):
     """The BaseModel class serves as a base class for all the models in the Ultralytics YOLO family."""
+
+    def forward(self, x, x2, augment=False, profile=False):
+        if augment:
+            img_size = x.shape[-2:]  # height, width
+            s = [1, 0.83, 0.67]  # scales
+            f = [None, 3, None]  # flips (2-ud, 3-lr)
+            y = []  # outputs
+            for si, fi in zip(s, f):
+                xi = scale_img(x.flip(fi) if fi else x, si, gs=int(self.stride.max()))
+                yi = self.my_forward_once(xi)[0]  # forward
+                # cv2.imwrite(f'img_{si}.jpg', 255 * xi[0].cpu().numpy().transpose((1, 2, 0))[:, :, ::-1])  # save
+                yi[..., :4] /= si  # de-scale
+                if fi == 2:
+                    yi[..., 1] = img_size[  0] - yi[..., 1]  # de-flip ud
+                elif fi == 3:
+                    yi[..., 0] = img_size[1] - yi[..., 0]  # de-flip lr
+                y.append(yi)
+            return torch.cat(y, 1), None  # augmented inference, train
+        else:
+            return self.forward_once(x, x2, profile)  # single-scale inference, train
+
+
+    def forward_once(self, x, x2, profile=False):
+        """
+        :param x:          RGB Inputs
+        :param x2:         IR  Inputs
+        :param profile:
+        :return:
+        """
+        y, dt = [], []  # outputs
+        i = 0
+        for m in self.model:
+            # print("Moudle", i)
+            if m.f != -1:  # if not from previous layer
+                if m.f != -4:
+                    # print(m)
+                    x = y[m.f] if isinstance(m.f, int) else [x if j == -1 else y[j] for j in m.f]  # from earlier layers
+
+            if profile:
+                o = thop.profile(m, inputs=(x,), verbose=False)[0] / 1E9 * 2 if thop else 0  # FLOPS
+                t = time_synchronized()
+                for _ in range(10):
+                    _ = m(x)
+                dt.append((time_synchronized() - t) * 100)
+                if m == self.model[0]:
+                    logger.info(f"{'time (ms)':>10s} {'GFLOPS':>10s} {'params':>10s}  {'module'}")
+                logger.info(f'{dt[-1]:10.2f} {o:10.2f} {m.np:10.0f}  {m.type}')
+
+            if m.f == -4:
+                x = m(x2)
+            else:
+                x = m(x)  # run
+            y.append(x if m.i in self.save else None)  # save output
+            # print(len(y))
+            i+=1
+
+        if profile:
+            logger.info('%.1fms total' % sum(dt))
+        return x
+
     def predict(self, x, x2, profile=False, visualize=False, augment=False, embed=None):
         """
         Perform a forward pass through the network.
@@ -342,7 +402,7 @@ class DetectionModel(BaseModel):
         if isinstance(m, Detect):  # includes all Detect subclasses like Segment, Pose, OBB, WorldDetect
             s = 256  # 2x min stride
             m.inplace = self.inplace
-            # def _forward(x):
+            # def _forward(x, x2):
             #     """Performs a forward pass through the model, handling different Detect subclass types accordingly."""
             #     if self.end2end:
             #         return self.forward(x)["one2many"]
@@ -365,65 +425,6 @@ class DetectionModel(BaseModel):
         if verbose:
             self.info()
             LOGGER.info("")
-
-    def forward(self, x, x2, augment=False, profile=False):
-        if augment:
-            img_size = x.shape[-2:]  # height, width
-            s = [1, 0.83, 0.67]  # scales
-            f = [None, 3, None]  # flips (2-ud, 3-lr)
-            y = []  # outputs
-            for si, fi in zip(s, f):
-                xi = scale_img(x.flip(fi) if fi else x, si, gs=int(self.stride.max()))
-                yi = self.my_forward_once(xi)[0]  # forward
-                # cv2.imwrite(f'img_{si}.jpg', 255 * xi[0].cpu().numpy().transpose((1, 2, 0))[:, :, ::-1])  # save
-                yi[..., :4] /= si  # de-scale
-                if fi == 2:
-                    yi[..., 1] = img_size[  0] - yi[..., 1]  # de-flip ud
-                elif fi == 3:
-                    yi[..., 0] = img_size[1] - yi[..., 0]  # de-flip lr
-                y.append(yi)
-            return torch.cat(y, 1), None  # augmented inference, train
-        else:
-            return self.my_forward_once(x, x2, profile)  # single-scale inference, train
-
-
-    def my_forward_once(self, x, x2, profile=False):
-        """
-        :param x:          RGB Inputs
-        :param x2:         IR  Inputs
-        :param profile:
-        :return:
-        """
-        y, dt = [], []  # outputs
-        i = 0
-        for m in self.model:
-            # print("Moudle", i)
-            if m.f != -1:  # if not from previous layer
-                if m.f != -4:
-                    # print(m)
-                    x = y[m.f] if isinstance(m.f, int) else [x if j == -1 else y[j] for j in m.f]  # from earlier layers
-
-            if profile:
-                o = thop.profile(m, inputs=(x,), verbose=False)[0] / 1E9 * 2 if thop else 0  # FLOPS
-                t = time_synchronized()
-                for _ in range(10):
-                    _ = m(x)
-                dt.append((time_synchronized() - t) * 100)
-                if m == self.model[0]:
-                    logger.info(f"{'time (ms)':>10s} {'GFLOPS':>10s} {'params':>10s}  {'module'}")
-                logger.info(f'{dt[-1]:10.2f} {o:10.2f} {m.np:10.0f}  {m.type}')
-
-            if m.f == -4:
-                x = m(x2)
-            else:
-                x = m(x)  # run
-            y.append(x if m.i in self.save else None)  # save output
-            # print(len(y))
-            i+=1
-
-        if profile:
-            logger.info('%.1fms total' % sum(dt))
-        return x
 
     def _predict_augment(self, x):
         """Perform augmentations on input image x and return augmented inference and train outputs."""

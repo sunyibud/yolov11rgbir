@@ -27,7 +27,7 @@ class Detect(nn.Module):
     end2end = False  # end2end
     max_det = 300  # max_det
     shape = None
-    anchors = torch.empty(0)  # init
+    # anchors = torch.empty(0)  # init
     strides = torch.empty(0)  # init
     legacy = False  # backward compatibility for v3/v5/v8/v9 models
 
@@ -38,6 +38,16 @@ class Detect(nn.Module):
         self.nl = len(ch)  # number of detection layers
         self.reg_max = 16  # DFL channels (ch[0] // 16 to scale 4/8/12/16/20 for n/s/m/l/x)
         self.no = nc + self.reg_max * 4  # number of outputs per anchor
+
+        # @todo self.na=
+        anchors = [
+            [10, 13, 16, 30, 33, 23],  # P3/8
+            [30, 61, 62, 45, 59, 119],  # P4/16
+            [116, 90, 156, 198, 373, 326]  # P5/32
+        ]
+        self.na = len(anchors[0]) // 2  # number of anchors
+        self.anchors = torch.tensor(anchors).float().view(self.nl, -1, 2)
+
         self.stride = torch.zeros(self.nl)  # strides computed during build
         c2, c3 = max((16, ch[0] // 4, self.reg_max * 4)), max(ch[0], min(self.nc, 100))  # channels
         self.cv2 = nn.ModuleList(

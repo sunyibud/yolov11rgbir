@@ -381,10 +381,12 @@ class BaseTrainer:
 
                 # Forward
                 with autocast(self.amp):
-                    # batch = self.preprocess_batch(imgs)
                     compute_loss = ComputeLoss(self.model)
                     pred = self.model(imgs_rgb, imgs_ir)
-                    self.loss, self.loss_items = compute_loss(pred, targets.to(self.device))
+                    # self.loss, self.loss_items = compute_loss(pred, targets.to(self.device))
+                    loss, loss_items = compute_loss(pred, targets.to(self.device))
+                    print(loss)
+                    print(loss_items)
                     if RANK != -1:
                         self.loss *= world_size
                     self.tloss = (
