@@ -101,25 +101,28 @@ except ImportError:
 class BaseModel(nn.Module):
     """The BaseModel class serves as a base class for all the models in the Ultralytics YOLO family."""
 
-    def forward(self, x, *args, **kwargs):
-        """
-        Perform forward pass of the model for either training or inference.
 
-        If x is a dict, calculates and returns the loss for training. Otherwise, returns predictions for inference.
+    def my_forward(self, x, x2, augment=False, profile=False):
+        if augment:
+            img_size = x.shape[-2:]  # height, width
+            s = [1, 0.83, 0.67]  # scales
+            f = [None, 3, None]  # flips (2-ud, 3-lr)
+            y = []  # outputs
+            for si, fi in zip(s, f):
+                xi = scale_img(x.flip(fi) if fi else x, si, gs=int(self.stride.max()))
+                yi = self.my_forward_once(xi)[0]  # forward
+                # cv2.imwrite(f'img_{si}.jpg', 255 * xi[0].cpu().numpy().transpose((1, 2, 0))[:, :, ::-1])  # save
+                yi[..., :4] /= si  # de-scale
+                if fi == 2:
+                    yi[..., 1] = img_size[  0] - yi[..., 1]  # de-flip ud
+                elif fi == 3:
+                    yi[..., 0] = img_size[1] - yi[..., 0]  # de-flip lr
+                y.append(yi)
+            return torch.cat(y, 1), None  # augmented inference, train
+        else:
+            return self.my_forward_once(x, x2, profile)  # single-scale inference, train
 
-        Args:
-            x (torch.Tensor | dict): Input tensor for inference, or dict with image tensor and labels for training.
-            *args (Any): Variable length argument list.
-            **kwargs (Any): Arbitrary keyword arguments.
-
-        Returns:
-            (torch.Tensor): Loss if x is a dict (training), or network predictions (inference).
-        """
-        if isinstance(x, dict):  # for cases of training and validating while training.
-            return self.loss(x, *args, **kwargs)
-        return self.predict(x, *args, **kwargs)
-
-    def predict(self, x, profile=False, visualize=False, augment=False, embed=None):
+    def predict(self, x, x2, profile=False, visualize=False, augment=False, embed=None):
         """
         Perform a forward pass through the network.
 
@@ -135,7 +138,8 @@ class BaseModel(nn.Module):
         """
         if augment:
             return self._predict_augment(x)
-        return self._predict_once(x, profile, visualize, embed)
+        return self._predict_once(x, x2, profile, visualize, embed)
+
 
     def _predict_once(self, x, profile=False, visualize=False, embed=None):
         """
@@ -166,7 +170,8 @@ class BaseModel(nn.Module):
         for m in self.model:
             #如果该层 m 的输入 m.f 不为 -1，表示该层的输入来自于先前的层，x 会被重新设置为来自于 m.f 对应的输出。如果 m.f 是整数，则直接使用 y[m.f]；如果 m.f 是列表，则使用列表中的输出 y[j]。
             if m.f != -1:  # if not from previous layer
-                x = y[m.f] if isinstance(m.f, int) else [x if j == -1 else y[j] for j in m.f]  # from earlier layers
+                if m.f != -4:
+                    x = y[m.f] if isinstance(m.f, int) else [x if j == -1 else y[j] for j in m.f]  # from earlier layers
             # 如果 profile 为 True，调用 _profile_one_layer 方法记录该层的计算时间。x 是输入数据，dt 存储了每层的计算时间。
             if profile:
                 self._profile_one_layer(m, x, dt)
@@ -361,9 +366,9 @@ class DetectionModel(BaseModel):
             m.inplace = self.inplace
             # def _forward(x):
             #     """Performs a forward pass through the model, handling different Detect subclass types accordingly."""
-                # if self.end2end:
-                #     return self.forward(x)["one2many"]
-                # return self.forward(x)[0] if isinstance(m, (Segment, Pose, OBB)) else self.forward(x)
+            #     if self.end2end:
+            #         return self.forward(x)["one2many"]
+            #     return self.forward(x)[0] if isinstance(m, (Segment, Pose, OBB)) else self.forward(x)
             # 输入 x 是在计算步长时由 torch.zeros(1, ch, s, s) 创建的一个张量。这个张量作为测试输入，通过模型的一次前向传播来获取步长和其他初始化参数。
             # 即shape为(1,3,256,256)
             # m.stride = torch.tensor([s / x.shape[-2] for x in _forward(torch.zeros(1, ch, s, s))])  # forward

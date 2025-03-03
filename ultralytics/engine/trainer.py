@@ -360,8 +360,11 @@ class BaseTrainer:
                 LOGGER.info(self.progress_string())
                 pbar = TQDM(enumerate(self.train_loader), total=nb)
             self.tloss = None
-            for i, batch in pbar:
+            for i, (imgs, targets, paths, _) in pbar:
                 self.run_callbacks("on_train_batch_start")
+                imgs = imgs.to(self.device, non_blocking=True).float() / 255.0  # uint8 to float32, 0-255 to 0.0-1.0
+                imgs_rgb = imgs[:, :3, :, :]
+                imgs_ir = imgs[:, 3:, :, :]
                 # Warmup
                 ni = i + nb * epoch
                 if ni <= nw:
@@ -377,8 +380,8 @@ class BaseTrainer:
 
                 # Forward
                 with autocast(self.amp):
-                    batch = self.preprocess_batch(batch)
-                    self.loss, self.loss_items = self.model(batch)
+                    # batch = self.preprocess_batch(imgs)
+                    self.loss, self.loss_items = self.model(imgs_rgb, imgs_ir)
                     if RANK != -1:
                         self.loss *= world_size
                     self.tloss = (
