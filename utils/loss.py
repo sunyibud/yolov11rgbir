@@ -122,9 +122,16 @@ class ComputeLoss:
     def __call__(self, p, targets):  # predictions, targets, model
         device = targets.device
         lcls, lbox, lobj = torch.zeros(1, device=device), torch.zeros(1, device=device), torch.zeros(1, device=device)
+        '''
+        tcls：真实类别索引。
+        tbox：真实目标框 (x, y, w, h)。
+        indices：匹配的索引 (batch_id, anchor_id, grid_y, grid_x)，用于提取预测值。
+        anchors：匹配的 anchor 大小。
+        '''
         tcls, tbox, indices, anchors = self.build_targets(p, targets)  # targets
 
         # Losses
+        # pi.shape == (batch, num_anchors, grid_y, grid_x, num_outputs)
         for i, pi in enumerate(p):  # layer index, layer predictions
             b, a, gj, gi = indices[i]  # image, anchor, gridy, gridx
             tobj = torch.zeros_like(pi[..., 0], device=device)  # target obj
