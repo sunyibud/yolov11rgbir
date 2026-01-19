@@ -1,0 +1,24 @@
+path: D:/data/dataset/DroneVehicle/DroneVehicle
+nc: 7
+names:
+  0: Car
+  1: Truck
+  2: Tractor
+  3: Camping
+  4: Van
+  5: Plane
+  6: Other
+view: dual
+label: obb
+label_view: ir
+rgb_dir: rgb/images
+ir_dir: ir/images
+train: split/train_default.txt
+val: split/val_default.txt
+test: split/test_default.txt
+train_rgb: split/train_default.txt
+train_ir: split/train_default.txt
+val_rgb: split/val_default.txt
+val_ir: split/val_default.txt
+test_rgb: split/test_default.txt
+test_ir: split/test_default.txt

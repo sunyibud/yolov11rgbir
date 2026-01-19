@@ -1,0 +1,11 @@
+numpy
+scipy
+polars
+opencv-python
+Pillow
+matplotlib
+tensorboard
+wandb
+PyYAML
+requests
+psutil
