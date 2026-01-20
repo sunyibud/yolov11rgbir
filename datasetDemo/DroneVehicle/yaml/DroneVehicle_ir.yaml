@@ -1,13 +1,11 @@
 path: D:/data/dataset/DroneVehicle/DroneVehicle
-nc: 7
+nc: 5
 names:
   0: Car
   1: Truck
-  2: Tractor
-  3: Camping
-  4: Van
-  5: Plane
-  6: Other
+  2: Bus
+  3: Van
+  4: Freight_Car
 view: ir
 label: hbb
 list_dir: ir/images
